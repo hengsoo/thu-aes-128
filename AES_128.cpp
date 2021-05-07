@@ -139,7 +139,7 @@ void AES_128::inv_sub_bytes(uint8_t *state) {
 	0 4 8  12	Row 0 | 0  4  8  12	 Row 0
 	1 5 9  13	Row 1 | 5  9  13 1   Row 1
 	2 6 10 14	Row 2 | 10 14 2  6	 Row 2
-	3 7 11 15	Row 3 | 15 3  7  11  Row 3 
+	3 7 11 15	Row 3 | 15 3  7  11  Row 3
 	=================
 */
 void AES_128::shift_rows(uint8_t *state) {
@@ -203,10 +203,10 @@ void AES_128::mix_columns(uint8_t *state) {
 	for (int i = 0; i < AES_BLOCK_SIZE; i += 4) {
 		temp = state[i] ^ state[i + 1] ^ state[i + 2] ^ state[i + 3];
 
-		temp_state[i]	  = xtime(state[i] ^ state[i + 1])	   ^ state[i]	  ^ temp;
+		temp_state[i] = xtime(state[i] ^ state[i + 1]) ^ state[i] ^ temp;
 		temp_state[i + 1] = xtime(state[i + 1] ^ state[i + 2]) ^ state[i + 1] ^ temp;
 		temp_state[i + 2] = xtime(state[i + 2] ^ state[i + 3]) ^ state[i + 2] ^ temp;
-		temp_state[i + 3] = xtime(state[i + 3] ^ state[i])	   ^ state[i + 3] ^ temp;
+		temp_state[i + 3] = xtime(state[i + 3] ^ state[i]) ^ state[i + 3] ^ temp;
 	}
 
 	for (int i = 0; i < AES_BLOCK_SIZE; i++) {
@@ -226,10 +226,10 @@ void AES_128::inv_mix_columns(uint8_t *state) {
 	uint8_t temp_state[16];
 
 	for (int i = 0; i < AES_BLOCK_SIZE; i += 4) {
-		temp_state[i] = MUL14[state[i]] ^ MUL11[state[i+1]] ^ MUL13[state[i+2]] ^ MUL9[state[i+3]];
-		temp_state[i+1] = MUL9[state[i]] ^ MUL14[state[i+1]] ^ MUL11[state[i+2]] ^ MUL13[state[i+3]];
-		temp_state[i+2] = MUL13[state[i]] ^ MUL9[state[i+1]] ^ MUL14[state[i+2]] ^ MUL11[state[i+3]];
-		temp_state[i+3] = MUL11[state[i]] ^ MUL13[state[i+1]] ^ MUL9[state[i+2]] ^ MUL14[state[i+3]];
+		temp_state[i] = MUL14[state[i]] ^ MUL11[state[i + 1]] ^ MUL13[state[i + 2]] ^ MUL9[state[i + 3]];
+		temp_state[i + 1] = MUL9[state[i]] ^ MUL14[state[i + 1]] ^ MUL11[state[i + 2]] ^ MUL13[state[i + 3]];
+		temp_state[i + 2] = MUL13[state[i]] ^ MUL9[state[i + 1]] ^ MUL14[state[i + 2]] ^ MUL11[state[i + 3]];
+		temp_state[i + 3] = MUL11[state[i]] ^ MUL13[state[i + 1]] ^ MUL9[state[i + 2]] ^ MUL14[state[i + 3]];
 	}
 
 	for (int i = 0; i < AES_BLOCK_SIZE; i++) {
@@ -250,7 +250,8 @@ void AES_128::add_round_keys(uint8_t *state, uint8_t *round_keys) {
 	2 6 10 14	Row 2
 	3 7 11 15	Row 3
 	=================
-	round_keys[11][16]; // 1 (before round) + 10 rounds
+	11 rounds of 16 bytes key; Round 0 Key is XOR with plaintext
+	round_keys[11*16];
 */
 void AES_128::generate_key_schedule_128(uint8_t *round_keys, uint8_t *cipher_key) {
 
@@ -264,8 +265,8 @@ void AES_128::generate_key_schedule_128(uint8_t *round_keys, uint8_t *cipher_key
 	// Round 1 ~ 10 keys
 	for (int round = 1; round <= AES_ROUNDS; round++) {
 
-		int last_round_start_index = (round - 1) * AES_BLOCK_SIZE;
-		int round_start_index = last_round_start_index + AES_BLOCK_SIZE;
+		int last_key_start_index = (round - 1) * AES_BLOCK_SIZE;
+		int key_start_index = last_key_start_index + AES_BLOCK_SIZE;
 
 		// ==============
 		// First column
@@ -273,22 +274,22 @@ void AES_128::generate_key_schedule_128(uint8_t *round_keys, uint8_t *cipher_key
 		// temp_column = Subbyte( Rotate( previous_column ) )
 
 		for (int i = 0; i < 3; i++) {
-			temp_column[i] = SBOX[ round_keys[last_round_start_index + 12 + (i + 1)] ];
+			temp_column[i] = SBOX[round_keys[last_key_start_index + 12 + (i + 1)]];
 		}
-		temp_column[3] = SBOX[round_keys[last_round_start_index + 12]];
+		temp_column[3] = SBOX[round_keys[last_key_start_index + 12]];
 
 		// K = W_-4 ^ temp_column ^ RCON
-		round_keys[round_start_index] = round_keys[last_round_start_index] ^ temp_column[0] ^ RCON[round - 1];
+		round_keys[key_start_index] = round_keys[last_key_start_index] ^ temp_column[0] ^ RCON[round - 1];
 		for (int i = 1; i < 4; i++) {
-			round_keys[round_start_index + i] = round_keys[last_round_start_index + i] ^ temp_column[i];
+			round_keys[key_start_index + i] = round_keys[last_key_start_index + i] ^ temp_column[i];
 		}
-		
+
 		// ===================
 		// Remaining columns
 		// ===================
 		// K = W_-4 ^ W_-1
 		for (int i = 4; i < AES_BLOCK_SIZE; i++) {
-			round_keys[round_start_index + i] = round_keys[last_round_start_index + i] ^ round_keys[(round_start_index + i) - 4];
+			round_keys[key_start_index + i] = round_keys[last_key_start_index + i] ^ round_keys[(key_start_index + i) - 4];
 		}
 	}
 
@@ -296,49 +297,53 @@ void AES_128::generate_key_schedule_128(uint8_t *round_keys, uint8_t *cipher_key
 
 void AES_128::encrypt(uint8_t *state, uint8_t *cipher_key) {
 
-	uint8_t round_keys[11*16]; // 1 (before round) + 10 rounds
+	uint8_t round_keys[11 * 16]; // 11 rounds of 16 bytes key
 
 	generate_key_schedule_128(round_keys, cipher_key);
 
 	// At this point, state = plaintext
+
 	add_round_keys(state, &round_keys[0]);
 
 	// Round 1 - 9
-	for (int round = 1; round < 10; round++) {
+	int key_start_index = AES_BLOCK_SIZE;
+	for (int round = 1; round < 10; round++, key_start_index += AES_BLOCK_SIZE) {
 		sub_bytes(state);
 		shift_rows(state);
 		mix_columns(state);
-		add_round_keys(state, &round_keys[(round)*AES_BLOCK_SIZE]);
+		add_round_keys(state, &round_keys[key_start_index]);
 	}
 	// Round 10
 	sub_bytes(state);
 	shift_rows(state);
-	add_round_keys(state, &round_keys[(AES_ROUNDS)*AES_BLOCK_SIZE]);
+	add_round_keys(state, &round_keys[key_start_index]);
 
 	// At this point, state = ciphertext
 }
 
 void AES_128::decrypt(uint8_t *state, uint8_t *cipher_key) {
 
-	uint8_t round_keys[11*16]; // 1 (before round) + 10 rounds
+	uint8_t round_keys[11 * 16]; // 11 rounds of 16 bytes key
 
 	generate_key_schedule_128(round_keys, cipher_key);
 
 	// At this point, state = ciphertext
-	add_round_keys(state, &round_keys[(AES_ROUNDS)*AES_BLOCK_SIZE]);
+
+	add_round_keys(state, &round_keys[AES_ROUNDS*AES_BLOCK_SIZE]);
 
 	// Round 1 - 9
-	for (int round = 9; round > 0; round--) {
+	int key_start_index = (AES_ROUNDS - 1) * AES_BLOCK_SIZE;
+	for (int round = 9; round > 0; round--, key_start_index -= AES_BLOCK_SIZE) {
 		inv_shift_rows(state);
 		inv_sub_bytes(state);
-		add_round_keys(state, &round_keys[(round)*AES_BLOCK_SIZE]);
+		add_round_keys(state, &round_keys[key_start_index]);
 		inv_mix_columns(state);
 	}
-	
+
 	// Round 10
 	inv_shift_rows(state);
 	inv_sub_bytes(state);
 	add_round_keys(state, &round_keys[0]);
-	
+
 	// At this point, state = plaintext
 }
