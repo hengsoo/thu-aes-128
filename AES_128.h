@@ -40,6 +40,6 @@ private:
 	static void mix_columns(uint8_t *state);
 	static void inv_mix_columns(uint8_t *state);
 	static void add_round_keys(uint8_t *state, uint8_t *round_keys);
-	static void generate_key_schedule_128(uint8_t **round_keys, uint8_t *cipher_key);
+	static void generate_key_schedule_128(uint8_t *round_keys, uint8_t *cipher_key);
 
 };

@@ -252,11 +252,11 @@ void AES_128::add_round_keys(uint8_t *state, uint8_t *round_keys) {
 	=================
 	round_keys[11][16]; // 1 (before round) + 10 rounds
 */
-void AES_128::generate_key_schedule_128(uint8_t **round_keys, uint8_t *cipher_key) {
+void AES_128::generate_key_schedule_128(uint8_t *round_keys, uint8_t *cipher_key) {
 
 	// Initial round key
 	for (int i = 0; i < AES_BLOCK_SIZE; i++) {
-		round_keys[0][i] = cipher_key[i];
+		round_keys[i] = cipher_key[i];
 	}
 
 	uint8_t temp_column[4];
@@ -264,24 +264,24 @@ void AES_128::generate_key_schedule_128(uint8_t **round_keys, uint8_t *cipher_ke
 	// Round 1 ~ 10 keys
 	for (int round = 1; round <= AES_ROUNDS; round++) {
 
+
 		// First column of each round
 		// Get last column + rotate word + subbyte
 		for (int i = 0; i < 3; i++) {
-			temp_column[i] = SBOX[round_keys[round - 1][i + 12 + 1]];
+			temp_column[i] = SBOX[round_keys[ (round - 1 ) * AES_BLOCK_SIZE + 12 + 1 + i]];
 		}
-
-		temp_column[3] = SBOX[round_keys[round - 1][12]];
+		temp_column[3] = SBOX[round_keys[(round - 1) * AES_BLOCK_SIZE + 12]];
 
 		// W_-4 ^ temp_column ^ RCON
-		round_keys[round][0] = round_keys[round - 1][0] ^ temp_column[0] ^ RCON[round - 1];
+		round_keys[round * AES_BLOCK_SIZE] = round_keys[(round - 1) * AES_BLOCK_SIZE] ^ temp_column[0] ^ RCON[round - 1];
 		for (int i = 1; i < 4; i++) {
-			round_keys[round][i] = round_keys[round - 1][i] ^ temp_column[i];
+			round_keys[round * AES_BLOCK_SIZE + i] = round_keys[(round - 1) * AES_BLOCK_SIZE + i] ^ temp_column[i];
 		}
 		
 		// Other columns
 		// W_-4 ^ W_-1
 		for (int i = 4; i < AES_BLOCK_SIZE; i++) {
-			round_keys[round][i] = round_keys[round - 1][i] ^ round_keys[round][i - 4];
+			round_keys[round * AES_BLOCK_SIZE + i] = round_keys[(round - 1) * AES_BLOCK_SIZE + i] ^ round_keys[round * AES_BLOCK_SIZE + i - 4];
 		}
 	}
 
@@ -289,63 +289,49 @@ void AES_128::generate_key_schedule_128(uint8_t **round_keys, uint8_t *cipher_ke
 
 void AES_128::encrypt(uint8_t *state, uint8_t *cipher_key) {
 
-	uint8_t round_keys[11][16]; // 1 (before round) + 10 rounds
+	uint8_t round_keys[11*16]; // 1 (before round) + 10 rounds
 
-	// Get uint8_t **round_keys
-	uint8_t *round_keys_rows[11];
-	for (int i = 0; i < 11;i++) {
-		round_keys_rows[i] = round_keys[i];
-	}
-	uint8_t **round_keys_ptr = round_keys_rows;
-
-	generate_key_schedule_128(round_keys_ptr, cipher_key);
+	generate_key_schedule_128(round_keys, cipher_key);
 
 	// At this point, state = plaintext
-	add_round_keys(state, round_keys[0]);
+	add_round_keys(state, &round_keys[0]);
 
 	// Round 1 - 9
 	for (int round = 1; round < 10; round++) {
 		sub_bytes(state);
 		shift_rows(state);
 		mix_columns(state);
-		add_round_keys(state, round_keys[round]);
+		add_round_keys(state, &round_keys[(round)*AES_BLOCK_SIZE]);
 	}
 	// Round 10
 	sub_bytes(state);
 	shift_rows(state);
-	add_round_keys(state, round_keys[AES_ROUNDS]);
+	add_round_keys(state, &round_keys[(AES_ROUNDS)*AES_BLOCK_SIZE]);
 
 	// At this point, state = ciphertext
 }
 
 void AES_128::decrypt(uint8_t *state, uint8_t *cipher_key) {
 
-	uint8_t round_keys[11][16]; // 1 (before round) + 10 rounds
+	uint8_t round_keys[11*16]; // 1 (before round) + 10 rounds
 
-	// Get uint8_t **round_keys
-	uint8_t *round_keys_rows[11];
-	for (int i = 0; i < 11;i++) {
-		round_keys_rows[i] = round_keys[i];
-	}
-	uint8_t **round_keys_ptr = round_keys_rows;
-
-	generate_key_schedule_128(round_keys_ptr, cipher_key);
+	generate_key_schedule_128(round_keys, cipher_key);
 
 	// At this point, state = ciphertext
-	add_round_keys(state, round_keys[AES_ROUNDS]);
+	add_round_keys(state, &round_keys[(AES_ROUNDS)*AES_BLOCK_SIZE]);
 
 	// Round 1 - 9
 	for (int round = 9; round > 0; round--) {
 		inv_shift_rows(state);
 		inv_sub_bytes(state);
-		add_round_keys(state, round_keys[round]);
+		add_round_keys(state, &round_keys[(round)*AES_BLOCK_SIZE]);
 		inv_mix_columns(state);
 	}
 	
 	// Round 10
 	inv_shift_rows(state);
 	inv_sub_bytes(state);
-	add_round_keys(state, round_keys[0]);
+	add_round_keys(state, &round_keys[0]);
 	
 	// At this point, state = plaintext
 }
