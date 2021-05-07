@@ -123,11 +123,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AES_128.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\AES_128.cpp" />
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AES_128.h" />
+    <ClInclude Include="src\AES_128.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />

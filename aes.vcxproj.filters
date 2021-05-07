@@ -15,15 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AES_128.cpp">
+    <ClCompile Include="src\AES_128.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AES_128.h">
+    <ClInclude Include="src\AES_128.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
