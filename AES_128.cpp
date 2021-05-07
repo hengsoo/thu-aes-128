@@ -264,24 +264,31 @@ void AES_128::generate_key_schedule_128(uint8_t *round_keys, uint8_t *cipher_key
 	// Round 1 ~ 10 keys
 	for (int round = 1; round <= AES_ROUNDS; round++) {
 
+		int last_round_start_index = (round - 1) * AES_BLOCK_SIZE;
+		int round_start_index = last_round_start_index + AES_BLOCK_SIZE;
 
-		// First column of each round
-		// Get last column + rotate word + subbyte
+		// ==============
+		// First column
+		// ==============
+		// temp_column = Subbyte( Rotate( previous_column ) )
+
 		for (int i = 0; i < 3; i++) {
-			temp_column[i] = SBOX[round_keys[ (round - 1 ) * AES_BLOCK_SIZE + 12 + 1 + i]];
+			temp_column[i] = SBOX[ round_keys[last_round_start_index + 12 + (i + 1)] ];
 		}
-		temp_column[3] = SBOX[round_keys[(round - 1) * AES_BLOCK_SIZE + 12]];
+		temp_column[3] = SBOX[round_keys[last_round_start_index + 12]];
 
-		// W_-4 ^ temp_column ^ RCON
-		round_keys[round * AES_BLOCK_SIZE] = round_keys[(round - 1) * AES_BLOCK_SIZE] ^ temp_column[0] ^ RCON[round - 1];
+		// K = W_-4 ^ temp_column ^ RCON
+		round_keys[round_start_index] = round_keys[last_round_start_index] ^ temp_column[0] ^ RCON[round - 1];
 		for (int i = 1; i < 4; i++) {
-			round_keys[round * AES_BLOCK_SIZE + i] = round_keys[(round - 1) * AES_BLOCK_SIZE + i] ^ temp_column[i];
+			round_keys[round_start_index + i] = round_keys[last_round_start_index + i] ^ temp_column[i];
 		}
 		
-		// Other columns
-		// W_-4 ^ W_-1
+		// ===================
+		// Remaining columns
+		// ===================
+		// K = W_-4 ^ W_-1
 		for (int i = 4; i < AES_BLOCK_SIZE; i++) {
-			round_keys[round * AES_BLOCK_SIZE + i] = round_keys[(round - 1) * AES_BLOCK_SIZE + i] ^ round_keys[round * AES_BLOCK_SIZE + i - 4];
+			round_keys[round_start_index + i] = round_keys[last_round_start_index + i] ^ round_keys[(round_start_index + i) - 4];
 		}
 	}
 
