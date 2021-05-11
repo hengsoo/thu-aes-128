@@ -62,8 +62,8 @@ int main() {
 	print("===== Plaintext 16Kb ===== ", plaintext);
 	//print("===== Plaintext(HEX) ===== ", plaintext, true);
 
-	print("===== Cipher Key ===== ", cipher_key, false, AES_128::AES_BLOCK_SIZE);
-	print("===== Initialization Vector ===== ", init_vector, false, AES_128::AES_BLOCK_SIZE);
+	print("===== Cipher Key 128b ===== ", cipher_key, false, AES_128::AES_BLOCK_SIZE);
+	print("===== Initialization Vector 128b===== ", init_vector, false, AES_128::AES_BLOCK_SIZE);
 
 	// Encrypt
 	auto start_time = high_resolution_clock::now();
@@ -71,7 +71,7 @@ int main() {
 	auto end_time = high_resolution_clock::now();
 
 	auto s_int = duration_cast<microseconds>(end_time - start_time);
-	std::cout << "16Kb Encryption Time Elapsed: " << s_int.count() << "us" << endl;
+	std::cout << "16Kb Encryption Time Elapsed: " << dec << s_int.count() << "us" << endl;
 	std::cout << "Encryption Efficiency: " << dec <<  (16 * 1000) / s_int.count() << "Mbps" << endl;
 
 	print("===== AES Encrypt(HEX) =====", ciphertext, true);
@@ -82,7 +82,7 @@ int main() {
 	auto d_end_time = high_resolution_clock::now();
 
 	auto d_s_int = duration_cast<microseconds>(d_end_time - d_start_time);
-	std::cout << "16Kb Decryption Time Elapsed: " << d_s_int.count() << "us" << endl;
+	std::cout << "16Kb Decryption Time Elapsed: " << dec << d_s_int.count() << "us" << endl;
 	std::cout << "Decryption Efficiency: " << dec << (16 * 1000) / d_s_int.count() << "Mbps" << endl;
 
 	print("===== AES Decrypt =====", decrypt_ciphertext);
