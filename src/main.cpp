@@ -7,8 +7,8 @@ using std::chrono::duration_cast;
 using std::chrono::duration;
 using std::chrono::microseconds;
 
-// 16k bits = 16 * 1024 bits = 2048 char = 128 * 16 bytes
-const int LENGTH = AES_128::AES_BLOCK_SIZE * 128;
+// 16k bits = 16 * 1000 bits = 2000 char = 125 * 16 bytes
+const int LENGTH = 125 * AES_128::AES_BLOCK_SIZE ;
 // + 1 is for trailing \0
 const int STR_LENGTH = LENGTH + 1;
 
