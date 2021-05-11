@@ -7,8 +7,8 @@ using std::chrono::duration_cast;
 using std::chrono::duration;
 using std::chrono::microseconds;
 
-// 16k bits = 128 bits * 125 blocks
-const int LENGTH = AES_128::AES_BLOCK_SIZE * 125;
+// 16k bits = 16 * 1024 bits = 2048 char = 128 * 16 bytes
+const int LENGTH = AES_128::AES_BLOCK_SIZE * 128;
 // + 1 is for trailing \0
 const int STR_LENGTH = LENGTH + 1;
 
@@ -63,7 +63,7 @@ int main() {
 	//print("===== Plaintext(HEX) ===== ", plaintext, true);
 
 	print("===== Cipher Key 128b ===== ", cipher_key, false, AES_128::AES_BLOCK_SIZE);
-	print("===== Initialization Vector 128b===== ", init_vector, false, AES_128::AES_BLOCK_SIZE);
+	print("===== Initialization Vector 128b ===== ", init_vector, false, AES_128::AES_BLOCK_SIZE);
 
 	// Encrypt
 	auto start_time = high_resolution_clock::now();
