@@ -12,7 +12,7 @@ const int LENGTH = AES_128::AES_BLOCK_SIZE * 125;
 // + 1 is for trailing \0
 const int STR_LENGTH = LENGTH + 1;
 
-void print(const char* words, uint8_t* data, bool hex_mode = false) {
+void print(const char* words, uint8_t* data, bool hex_mode = false, int size = LENGTH) {
 	cout << words << endl;
 	if (hex_mode) {
 		for (int i = 0; i < LENGTH; i++) {
@@ -20,7 +20,7 @@ void print(const char* words, uint8_t* data, bool hex_mode = false) {
 		}
 	}
 	else {
-		for (int i = 0; i < LENGTH; i++) {
+		for (int i = 0; i < size; i++) {
 			cout << dec << (data[i]);
 		}
 	}
@@ -29,7 +29,7 @@ void print(const char* words, uint8_t* data, bool hex_mode = false) {
 
 void random_str_(const int len, uint8_t* str) {
 
-	static const char alphanum[] =
+	static const uint8_t alphanum[] =
 		"0123456789"
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		"abcdefghijklmnopqrstuvwxyz";
@@ -59,22 +59,32 @@ int main() {
 	random_str_(AES_128::AES_BLOCK_SIZE, cipher_key);
 	random_str_(AES_128::AES_BLOCK_SIZE, init_vector);
 
-	print("===== Plaintext ===== ", plaintext);
+	print("===== Plaintext 16Kb ===== ", plaintext);
 	//print("===== Plaintext(HEX) ===== ", plaintext, true);
 
-	print("===== Cipher Key ===== ", cipher_key);
-	print("===== Initialization Vector ===== ", init_vector);
+	print("===== Cipher Key ===== ", cipher_key, false, AES_128::AES_BLOCK_SIZE);
+	print("===== Initialization Vector ===== ", init_vector, false, AES_128::AES_BLOCK_SIZE);
 
+	// Encrypt
 	auto start_time = high_resolution_clock::now();
 	AES_128::encrypt_(plaintext, LENGTH, cipher_key, AES_128::AES_BLOCK_SIZE, init_vector, ciphertext);
 	auto end_time = high_resolution_clock::now();
 
 	auto s_int = duration_cast<microseconds>(end_time - start_time);
-	std::cout << "Time Elapsed: " << s_int.count() << "ms" << endl;
+	std::cout << "16Kb Encryption Time Elapsed: " << s_int.count() << "us" << endl;
+	std::cout << "Encryption Efficiency: " << dec <<  (16 * 1000) / s_int.count() << "Mbps" << endl;
 
-	//print("===== AES Encrypt(HEX) =====", ciphertext, true);
+	print("===== AES Encrypt(HEX) =====", ciphertext, true);
 
+	// Decrypt
+	auto d_start_time = high_resolution_clock::now();
 	AES_128::decrypt_(ciphertext, LENGTH, cipher_key, AES_128::AES_BLOCK_SIZE, init_vector, decrypt_ciphertext);
+	auto d_end_time = high_resolution_clock::now();
+
+	auto d_s_int = duration_cast<microseconds>(d_end_time - d_start_time);
+	std::cout << "16Kb Decryption Time Elapsed: " << d_s_int.count() << "us" << endl;
+	std::cout << "Decryption Efficiency: " << dec << (16 * 1000) / d_s_int.count() << "Mbps" << endl;
+
 	print("===== AES Decrypt =====", decrypt_ciphertext);
 	//print("===== AES Decrypt(HEX) =====", decrypt_ciphertext, true);
 
