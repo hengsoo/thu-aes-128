@@ -186,11 +186,87 @@ void AES_128::generate_key_schedule_128(uint8_t *round_keys, uint8_t *cipher_key
 
 }
 
-void AES_128::encrypt(uint8_t *state, uint8_t *cipher_key) {
+void AES_128::encrypt_(uint8_t* plaintext, int plaintext_len, uint8_t* cipher_key, int cipher_key_len, uint8_t* init_vector, uint8_t* result_) {
+	
+	if (plaintext_len % AES_BLOCK_SIZE != 0 || plaintext_len < 1) {
+		cout << "Length of plaintext must be multiple of 128 bits." << endl;
+		return;
+	}
+
+	else if (cipher_key_len != AES_BLOCK_SIZE ) {
+		cout << "Length of cipher key must be 128 bits key size." << endl;
+		return;
+	}
+
+	// Copy plaintext to result
+	for (int i = 0; i < plaintext_len; i++) {
+		result_[i] = plaintext[i];
+	}
 
 	uint8_t round_keys[11 * 16]; // 11 rounds of 16 bytes key
 
 	generate_key_schedule_128(round_keys, cipher_key);
+	
+	int no_of_blocks = plaintext_len / AES_BLOCK_SIZE;
+
+	uint8_t* previous_result = init_vector;
+
+	// CBC chaining
+	for (int i = 0; i < no_of_blocks; i++) {
+
+		int start_index = i * AES_BLOCK_SIZE;
+
+		for (int j = 0; j < AES_BLOCK_SIZE; j++) {
+			result_[start_index + j] ^= previous_result[j];
+		}
+
+		encrypt_block_(&result_[start_index], round_keys);
+
+		previous_result = &result_[start_index];
+	}
+}
+
+void AES_128::decrypt_(uint8_t* ciphertext, int ciphertext_len, uint8_t* cipher_key, int cipher_key_len, uint8_t* init_vector, uint8_t* result_) {
+
+	if (ciphertext_len % AES_BLOCK_SIZE != 0 || ciphertext_len < 1) {
+		cout << "Length of ciphertext must be multiple of 128 bits." << endl;
+		return;
+	}
+
+	else if (cipher_key_len != AES_BLOCK_SIZE) {
+		cout << "Length of cipher key must be 128 bits key size." << endl;
+		return;
+	}
+
+	// Copy ciphertext to result
+	for (int i = 0; i < ciphertext_len; i++) {
+		result_[i] = ciphertext[i];
+	}
+
+	uint8_t round_keys[11 * 16]; // 11 rounds of 16 bytes key
+
+	generate_key_schedule_128(round_keys, cipher_key);
+
+	int no_of_blocks = ciphertext_len / AES_BLOCK_SIZE;
+
+	uint8_t* previous_result = init_vector;
+
+	// CBC chaining
+	for (int i = 0; i < no_of_blocks; i++) {
+
+		int start_index = i * AES_BLOCK_SIZE;
+
+		decrypt_block_(&result_[start_index], round_keys);
+
+		for (int j = 0; j < AES_BLOCK_SIZE; j++) {
+			result_[start_index + j] ^= previous_result[j];
+		}
+
+		previous_result = &ciphertext[start_index];
+	}
+}
+
+void AES_128::encrypt_block_(uint8_t *state, uint8_t *round_keys) {
 
 	// At this point, state = plaintext
 
@@ -212,11 +288,7 @@ void AES_128::encrypt(uint8_t *state, uint8_t *cipher_key) {
 	// At this point, state = ciphertext
 }
 
-void AES_128::decrypt(uint8_t *state, uint8_t *cipher_key) {
-
-	uint8_t round_keys[11 * 16]; // 11 rounds of 16 bytes key
-
-	generate_key_schedule_128(round_keys, cipher_key);
+void AES_128::decrypt_block_(uint8_t *state, uint8_t *round_keys) {
 
 	// At this point, state = ciphertext
 

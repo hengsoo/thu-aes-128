@@ -20,10 +20,11 @@ public:
 	static const uint8_t SBOX[256];
 	static const uint8_t INV_SBOX[256];
 
-	static void encrypt(uint8_t *plaintext, uint8_t *cipher_key);
-	static void decrypt(uint8_t *ciphertext, uint8_t *cipher_key);
+	static void encrypt_(uint8_t* plaintext, int plaintext_len,
+		uint8_t* cipher_key, int cipherkey_len, uint8_t* init_vector, uint8_t* ciphertext_);
+	static void decrypt_(uint8_t* ciphertext, int ciphertext_len,
+		uint8_t* cipher_key, int cipherkey_len, uint8_t* init_vector, uint8_t* plaintext_);
 
-	
 
 private:
 	// Multiplication lookup tables
@@ -42,4 +43,6 @@ private:
 	static void add_round_keys(uint8_t *state, uint8_t *round_keys);
 	static void generate_key_schedule_128(uint8_t *round_keys, uint8_t *cipher_key);
 
+	static void encrypt_block_(uint8_t* plaintext_, uint8_t* round_keys);
+	static void decrypt_block_(uint8_t* ciphertext_, uint8_t* round_keys);
 };

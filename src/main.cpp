@@ -1,43 +1,82 @@
 #include "AES_128.h"
+#include <ctime>
+#include <chrono>
+
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+using std::chrono::duration;
+using std::chrono::microseconds;
+
+// 16k bits = 128 bits * 125 blocks
+const int LENGTH = AES_128::AES_BLOCK_SIZE * 125;
+// + 1 is for trailing \0
+const int STR_LENGTH = LENGTH + 1;
+
+void print(const char* words, uint8_t* data, bool hex_mode = false) {
+	cout << words << endl;
+	if (hex_mode) {
+		for (int i = 0; i < LENGTH; i++) {
+			cout << hex << setw(2) << setfill('0') << (int)data[i] << " ";
+		}
+	}
+	else {
+		for (int i = 0; i < LENGTH; i++) {
+			cout << dec << (data[i]);
+		}
+	}
+	cout << endl << endl;
+}
+
+void random_str_(const int len, uint8_t* str) {
+
+	static const char alphanum[] =
+		"0123456789"
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		"abcdefghijklmnopqrstuvwxyz";
+
+	static const int mod_num = (sizeof(alphanum) - 1);
+
+	for (int i = 0; i < len; ++i)
+		str[i] = alphanum[rand() % mod_num];
+}
 
 int main() {
-	uint8_t cipher_key[] = {
-		//0x0f, 0x15, 0x71, 0xc9, 0x47, 0xd9, 0xe8, 0x59, 
-		//0x0c, 0xb7, 0xad, 0xd6, 0xaf, 0x7f, 0x67, 0x98,
-		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-		0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-	};
 
-	uint8_t plaintext[] = {
-		//0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
-		//0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
-		0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-		0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
-	};
+	cout << endl << "=======================================" << endl;
+	cout << "= AES 128-bit - CBC Mode - No Padding =" << endl;
+	cout << "=======================================" << endl << endl;;
 
-	for (int i = 0; i < 16;i++) {
-		cout << hex << setw(2) << static_cast<int>(plaintext[i]) << " ";
-		//if ((i+1) % 4 == 0) {
-		//	cout << endl;
-		//}
-	}
-	cout << endl;
-	cout << endl;
+	//uint8_t plaintext[STR_LENGTH] = "Hello World 1234Hello World 1234";
+	uint8_t plaintext[LENGTH] = { 0 };
+	uint8_t cipher_key[AES_128::AES_BLOCK_SIZE] = { 0 };
+	uint8_t init_vector[AES_128::AES_BLOCK_SIZE] = { 0 };
 
-	AES_128::encrypt(plaintext, cipher_key);
+	uint8_t ciphertext[LENGTH] = { 0 };
+	uint8_t decrypt_ciphertext[LENGTH] = { 0 };
+	
+	srand(time(0));
+	random_str_(LENGTH, plaintext);
+	random_str_(AES_128::AES_BLOCK_SIZE, cipher_key);
+	random_str_(AES_128::AES_BLOCK_SIZE, init_vector);
 
-	for (int i = 0; i < 16;i++) {
-		cout << hex << static_cast<int>(plaintext[i]) << " ";
-	}
-	cout << endl;
-	cout << endl;
+	print("===== Plaintext ===== ", plaintext);
+	//print("===== Plaintext(HEX) ===== ", plaintext, true);
 
-	AES_128::decrypt(plaintext, cipher_key);
+	print("===== Cipher Key ===== ", cipher_key);
+	print("===== Initialization Vector ===== ", init_vector);
 
-	for (int i = 0; i < 16;i++) {
-		cout << hex << static_cast<int>(plaintext[i]) << " ";
-	}
-	cout << endl;
+	auto start_time = high_resolution_clock::now();
+	AES_128::encrypt_(plaintext, LENGTH, cipher_key, AES_128::AES_BLOCK_SIZE, init_vector, ciphertext);
+	auto end_time = high_resolution_clock::now();
+
+	auto s_int = duration_cast<microseconds>(end_time - start_time);
+	std::cout << "Time Elapsed: " << s_int.count() << "ms" << endl;
+
+	//print("===== AES Encrypt(HEX) =====", ciphertext, true);
+
+	AES_128::decrypt_(ciphertext, LENGTH, cipher_key, AES_128::AES_BLOCK_SIZE, init_vector, decrypt_ciphertext);
+	print("===== AES Decrypt =====", decrypt_ciphertext);
+	//print("===== AES Decrypt(HEX) =====", decrypt_ciphertext, true);
 
 	return 0;
 }
